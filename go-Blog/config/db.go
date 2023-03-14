@@ -28,9 +28,7 @@ func SetUpDataBaseConnection() *gorm.DB {
 	dsn := fmt.Sprintf("host=%v user=%v password=%v dbname=%v port=%v TimeZone=Asia/Jakarta", dbHost, dbUser, dbPass, dbName, dbPort)
 
 	db, err := gorm.Open(postgres.New(postgres.Config{
-		DSN: dsn,
-		// Menambahkan opsi berikut akan memungkinkan driver database
-		// untuk mendukung tipe data UUID secara bawaan.
+		DSN:                  dsn,
 		PreferSimpleProtocol: true,
 	}), &gorm.Config{})
 
