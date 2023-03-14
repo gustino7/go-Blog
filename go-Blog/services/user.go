@@ -19,8 +19,8 @@ type userService struct {
 type UserService interface {
 	CreateUser(ctx context.Context, userDTO dto.RegisterUser) (entity.User, error)
 	Login(ctx context.Context, email string, password string) (bool, error)
-	Update(ctx context.Context, user entity.User) (entity.User, error)
-	Delete(ctx context.Context, userDTO dto.LoginUser) (entity.User, error)
+	Update(ctx context.Context, nama string, userid uint64) (entity.User, error)
+	Delete(ctx context.Context, userID uint64) (bool, error)
 	FindUser(ctx context.Context, userDTO dto.LoginUser) (entity.User, error)
 	GetUserByID(ctx context.Context, userID uint64) (entity.User, error)
 }
@@ -37,7 +37,7 @@ func (s *userService) CreateUser(ctx context.Context, userDTO dto.RegisterUser) 
 
 	fmt.Println(user)
 	userRegist, err := s.userRepo.FindUser(ctx, nil, user.Email)
-	if err != nil {
+	if err == nil {
 		fmt.Println("kondisi ini")
 		return entity.User{}, err
 	}
@@ -73,8 +73,8 @@ func (s *userService) Login(ctx context.Context, email string, password string) 
 	return false, err
 }
 
-func (s *userService) Update(ctx context.Context, user entity.User) (entity.User, error) {
-	updUser, err := s.userRepo.Update(ctx, nil, user)
+func (s *userService) Update(ctx context.Context, nama string, userid uint64) (entity.User, error) {
+	updUser, err := s.userRepo.Update(ctx, nil, nama, userid)
 	if err != nil {
 		return entity.User{}, err
 	}
@@ -82,16 +82,13 @@ func (s *userService) Update(ctx context.Context, user entity.User) (entity.User
 	return updUser, nil
 }
 
-func (s *userService) Delete(ctx context.Context, userDTO dto.LoginUser) (entity.User, error) {
-	var user entity.User
-	copier.Copy(&user, &userDTO)
-
-	delUser, err := s.userRepo.Delete(ctx, nil, user)
+func (s *userService) Delete(ctx context.Context, userID uint64) (bool, error) {
+	_, err := s.userRepo.Delete(ctx, nil, userID)
 	if err != nil {
-		return entity.User{}, err
+		return false, err
 	}
 
-	return delUser, nil
+	return true, nil
 }
 
 func (s *userService) FindUser(ctx context.Context, userDTO dto.LoginUser) (entity.User, error) {

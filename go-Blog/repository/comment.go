@@ -15,8 +15,8 @@ type CommentRepository interface {
 	AddComment(ctx context.Context, tx *gorm.DB, title string, comment string) (entity.BlogComment, error)
 }
 
-func NewBlogCommentRepository(db *gorm.DB) BlogRepository {
-	return &blogRepository{
+func NewCommentRepository(db *gorm.DB) CommentRepository {
+	return &commentRepository{
 		db: db,
 	}
 }

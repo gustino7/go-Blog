@@ -37,23 +37,23 @@ func Authenticate(jwtService services.JWTService, role string) gin.HandlerFunc {
 			return
 		}
 
-		teamRole, err := jwtService.GetRoleByToken(string(authHeader))
-		fmt.Println("ROLE", teamRole)
-		if err != nil || (teamRole != "admin" && teamRole != role) {
+		userRole, err := jwtService.GetRoleByToken(string(authHeader))
+		fmt.Println("ROLE", userRole)
+		if err != nil || (userRole != "admin" && userRole != role) {
 			response := utils.BuildErrorResponse("Failed to process request", http.StatusUnauthorized)
 			c.AbortWithStatusJSON(http.StatusForbidden, response)
 			return
 		}
 
 		// get userID from token
-		teamID, err := jwtService.GetUserIDByToken(authHeader)
+		userID, err := jwtService.GetUserIDByToken(authHeader)
 		if err != nil {
 			response := utils.BuildErrorResponse("Failed to process request", http.StatusUnauthorized)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
 			return
 		}
-		fmt.Println("ROLE", teamRole)
-		c.Set("teamID", teamID)
+		fmt.Println("ROLE", userRole)
+		c.Set("userID", userID)
 		c.Set("token", authHeader)
 		c.Next()
 	}

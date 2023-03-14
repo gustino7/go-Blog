@@ -13,22 +13,25 @@ import (
 
 type blogController struct {
 	blogService services.BlogService
+	jwtService  services.JWTService
 }
 
 type BlogController interface {
 	UploadBlog(ctx *gin.Context)
-	GetBlogComment(ctx *gin.Context)
+	GetBlog(ctx *gin.Context)
 	Like(ctx *gin.Context)
+	GetCommentBlog(ctx *gin.Context)
 }
 
-func NewBlogController(blogService services.BlogService) BlogController {
+func NewBlogController(blogService services.BlogService, jwtService services.JWTService) BlogController {
 	return &blogController{
 		blogService: blogService,
+		jwtService:  jwtService,
 	}
 }
 
+// upload blog
 func (c *blogController) UploadBlog(ctx *gin.Context) {
-	//upload blog
 	var dtoBlog dto.UpBlog
 	err := ctx.ShouldBind(&dtoBlog)
 	fmt.Println(dtoBlog)
@@ -38,7 +41,16 @@ func (c *blogController) UploadBlog(ctx *gin.Context) {
 		return
 	}
 
-	UpBlog, err := c.blogService.UploadBlog(ctx, dtoBlog)
+	//cek token return user id
+	token := ctx.MustGet("token").(string)
+	userID, err := c.jwtService.GetUserIDByToken(token)
+	if err != nil {
+		response := utils.BuildErrorResponse("Failed to find token", http.StatusBadRequest)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, response)
+		return
+	}
+
+	UpBlog, err := c.blogService.UploadBlog(ctx, dtoBlog, userID)
 	if err != nil {
 		response := utils.BuildErrorResponse("Failed to upload blog", http.StatusBadRequest)
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, response)
@@ -50,11 +62,11 @@ func (c *blogController) UploadBlog(ctx *gin.Context) {
 
 }
 
-func (c *blogController) GetBlogComment(ctx *gin.Context) {
+func (c *blogController) GetBlog(ctx *gin.Context) {
 	//upload blog
 	var blog []entity.Blog
 
-	blog, err := c.blogService.GetBlogComment(ctx, entity.Blog{})
+	blog, err := c.blogService.GetBlog(ctx, entity.Blog{})
 	if err != nil {
 		response := utils.BuildErrorResponse("Failed to get all blog", http.StatusBadRequest)
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, response)
@@ -89,18 +101,26 @@ func (c *blogController) Like(ctx *gin.Context) {
 
 }
 
-// func (c *blogController) Comment(ctx *gin.Context) {
-// 	//upload blog
-// 	var comment string
+// get comment by title blog
+func (c *blogController) GetCommentBlog(ctx *gin.Context) {
+	var blog entity.Blog
+	err := ctx.ShouldBind(&blog)
 
-// 	blog, err := c.blogService.Comment(ctx, comment)
-// 	if err != nil {
-// 		response := utils.BuildErrorResponse("Failed to comment", http.StatusBadRequest)
-// 		ctx.AbortWithStatusJSON(http.StatusBadRequest, response)
-// 		return
-// 	}
+	if err != nil {
+		response := utils.BuildErrorResponse("Failed to process request", http.StatusBadRequest)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, response)
+		return
+	}
 
-// 	response := utils.BuildSuccessResponse("Success to comment", http.StatusCreated, blog)
-// 	ctx.JSON(http.StatusCreated, response)
+	//get blog data and comment
+	commentBlog, err := c.blogService.GetCommentBlog(ctx, blog.Title)
+	if err != nil {
+		response := utils.BuildErrorResponse("Failed to get all blog", http.StatusBadRequest)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, response)
+		return
+	}
 
-// }
+	response := utils.BuildSuccessResponse("Success get all blog", http.StatusCreated, commentBlog)
+	ctx.JSON(http.StatusCreated, response)
+
+}

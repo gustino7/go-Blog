@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"tugas4/entity"
 
 	"gorm.io/gorm"
@@ -14,8 +13,9 @@ type blogRepository struct {
 
 type BlogRepository interface {
 	UploadBlog(ctx context.Context, tx *gorm.DB, blog entity.Blog) (entity.Blog, error)
-	GetBlogComment(ctx context.Context, tx *gorm.DB, blog entity.Blog) ([]entity.Blog, error)
+	GetBlog(ctx context.Context, tx *gorm.DB, blog entity.Blog) ([]entity.Blog, error)
 	Like(ctx context.Context, tx *gorm.DB, title string) (entity.Blog, error)
+	GetCommentBlog(ctx context.Context, tx *gorm.DB, title string) (entity.Blog, error)
 }
 
 func NewBlogRepository(db *gorm.DB) BlogRepository {
@@ -40,7 +40,7 @@ func (r *blogRepository) UploadBlog(ctx context.Context, tx *gorm.DB, blog entit
 	return blog, nil
 }
 
-func (r *blogRepository) GetBlogComment(ctx context.Context, tx *gorm.DB, blog entity.Blog) ([]entity.Blog, error) {
+func (r *blogRepository) GetBlog(ctx context.Context, tx *gorm.DB, blog entity.Blog) ([]entity.Blog, error) {
 	var err error
 	var getBlog []entity.Blog
 	if tx == nil {
@@ -50,11 +50,9 @@ func (r *blogRepository) GetBlogComment(ctx context.Context, tx *gorm.DB, blog e
 		err = r.db.WithContext(ctx).Debug().Preload("Comment").Find(&getBlog).Error
 	}
 	if err != nil {
-		fmt.Println("kondisi ini")
 		return []entity.Blog{}, err
 	}
 
-	fmt.Println("kondisi 2")
 	return getBlog, nil
 }
 
@@ -87,4 +85,20 @@ func (r *blogRepository) Like(ctx context.Context, tx *gorm.DB, title string) (e
 	}
 
 	return like, nil
+}
+
+func (r *blogRepository) GetCommentBlog(ctx context.Context, tx *gorm.DB, title string) (entity.Blog, error) {
+	var err error
+	var getCommentBlog entity.Blog
+	if tx == nil {
+		tx = r.db.WithContext(ctx).Debug().Where("title = ?", title).Preload("Comment").Find(&getCommentBlog)
+		err = tx.Error
+	} else {
+		err = r.db.WithContext(ctx).Debug().Where("title = ?", title).Preload("Comment").Find(&getCommentBlog).Error
+	}
+	if err != nil {
+		return entity.Blog{}, err
+	}
+
+	return getCommentBlog, nil
 }

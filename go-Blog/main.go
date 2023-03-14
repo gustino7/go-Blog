@@ -21,14 +21,19 @@ func main() {
 
 	blogRepository := repository.NewBlogRepository(db)
 	blogService := services.NewBlogService(blogRepository)
-	blogController := controller.NewBlogController(blogService)
+	blogController := controller.NewBlogController(blogService, jwtService)
+
+	commentRepo := repository.NewCommentRepository(db)
+	commentService := services.NewCommentService(commentRepo)
+	commentController := controller.NewCommentController(commentService)
 	defer config.CloseDatabaseConnection(db)
 
 	server := gin.Default()
 	server.Use(middleware.CORS())
 
 	routes.UserRoutes(server, userController, jwtService)
-	routes.BlogRoutes(server, blogController)
+	routes.BlogRoutes(server, blogController, jwtService)
+	routes.CommentRoutes(server, commentController)
 
 	port := "8080"
 	server.Run(":" + port)
