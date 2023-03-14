@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"tugas4/config"
 	"tugas4/controller"
 	"tugas4/middleware"
@@ -9,9 +10,16 @@ import (
 	"tugas4/services"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	if os.Getenv("APP_ENV") != "Production" {
+		if err := godotenv.Load(".env"); err != nil {
+			panic(err)
+		}
+	}
+
 	db := config.SetUpDataBaseConnection()
 
 	jwtService := services.NewJWTService()
@@ -35,6 +43,9 @@ func main() {
 	routes.BlogRoutes(server, blogController, jwtService)
 	routes.CommentRoutes(server, commentController)
 
-	port := "8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8888"
+	}
 	server.Run(":" + port)
 }
